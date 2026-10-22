@@ -1,0 +1,104 @@
+
+replicaCount: 1
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+components:
+  vote:
+    enabled: true
+    image: dockersamples/examplevotingapp_vote
+    tag: latest
+    port: 80
+    service:
+      enabled: true
+      type: NodePort
+      port: 8080
+      nodePort: 31000
+
+  result:
+    enabled: true
+    image: dockersamples/examplevotingapp_result
+    tag: latest
+    port: 80
+    service:
+      enabled: true
+      type: NodePort
+      port: 8081
+      nodePort: 31001
+
+  worker:
+    enabled: true
+    image: dockersamples/examplevotingapp_worker
+    tag: latest
+
+  redis:
+    enabled: true
+    image: redis
+    tag: alpine
+    port: 6379
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 6379
+
+  db:
+    enabled: true
+    image: postgres
+    tag: "15-alpine"
+    port: 5432
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 5432
+
+database:
+  username: postgres
+  # Temporary development value; secure with a Kubernetes Secret before deployment.
+  password: postgres
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+
+# Compatibility settings for the remaining Helm templates
+service:
+  type: NodePort
+  port: 8080
+  nodePort: 31000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts: []
+  tls: []
+
+httpRoute:
+  enabled: false
+  annotations: {}
+  parentRefs: []
+  hostnames: []
+  rules: []
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+
+httpRoute:
+  enabled: false
+  annotations: {}
+  parentRefs: []
+  hostnames: []
+  rules: []

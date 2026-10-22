@@ -1,0 +1,80 @@
+
+{{- range $name, $component := .Values.components }}
+{{- if $component.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    app: {{ $name }}
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: {{ $.Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $name }}
+    spec:
+      containers:
+        - name: {{ $name }}
+          image: "{{ $component.image }}:{{ $component.tag }}"
+          imagePullPolicy: IfNotPresent
+          {{- if $component.port }}
+          ports:
+            - name: {{ $name }}
+              containerPort: {{ $component.port }}
+          {{- end }}
+          {{- if eq $name "vote" }}
+          env:
+            - name: REDIS_HOST
+              value: redis
+          {{- else if eq $name "result" }}
+          env:
+            - name: DB_HOST
+              value: db
+            - name: DB_USER
+              value: {{ $.Values.database.username | quote }}
+            - name: DB_PASSWORD
+              value: {{ $.Values.database.password | quote }}
+          {{- else if eq $name "worker" }}
+          env:
+            - name: REDIS_HOST
+              value: redis
+            - name: DB_HOST
+              value: db
+            - name: DB_USER
+              value: {{ $.Values.database.username | quote }}
+            - name: DB_PASSWORD
+              value: {{ $.Values.database.password | quote }}
+          {{- else if eq $name "db" }}
+          env:
+            - name: POSTGRES_USER
+              value: {{ $.Values.database.username | quote }}
+            - name: POSTGRES_PASSWORD
+              value: {{ $.Values.database.password | quote }}
+          {{- end }}
+          {{- if eq $name "db" }}
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/postgresql/data
+          {{- else if eq $name "redis" }}
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+          {{- end }}
+      {{- if or (eq $name "db") (eq $name "redis") }}
+      volumes:
+        {{- if eq $name "db" }}
+        - name: db-data
+          emptyDir: {}
+        {{- else }}
+        - name: redis-data
+          emptyDir: {}
+        {{- end }}
+      {{- end }}
+{{- end }}
+{{- end }}

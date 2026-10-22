@@ -1,0 +1,23 @@
+
+{{- range $name, $component := .Values.components }}
+{{- if and $component.enabled $component.service $component.service.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    app: {{ $name }}
+spec:
+  type: {{ $component.service.type }}
+  ports:
+    - port: {{ $component.service.port }}
+      targetPort: {{ $component.port }}
+      protocol: TCP
+      {{- if eq $component.service.type "NodePort" }}
+      nodePort: {{ $component.service.nodePort }}
+      {{- end }}
+  selector:
+    app: {{ $name }}
+{{- end }}
+{{- end }}
