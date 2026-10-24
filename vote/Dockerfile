@@ -9,6 +9,9 @@ RUN apt-get update && \
 
 WORKDIR /usr/local/app
 
+# Update packaging tools to address bundled vulnerabilities
+RUN python -m pip install --no-cache-dir --upgrade "setuptools>=80.9.0" "wheel>=0.46.2"
+
 # Install Python dependencies
 COPY requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
