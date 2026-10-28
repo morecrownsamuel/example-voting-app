@@ -1,20 +1,19 @@
-
 name: Terraform and Helm Checks
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   terraform-checks:
     name: Validate Terraform
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -25,7 +24,7 @@ jobs:
       - name: Check Terraform formatting
         run: terraform -chdir=terraform fmt -check -recursive
 
-      - name: Initialize Terraform
+      - name: Initialize Terraform without backend
         run: terraform -chdir=terraform init -backend=false
 
       - name: Validate Terraform
@@ -34,7 +33,6 @@ jobs:
   helm-checks:
     name: Validate Helm chart
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -44,3 +42,6 @@ jobs:
 
       - name: Lint voting application chart
         run: helm lint ./voting-app
+
+      - name: Render chart templates
+        run: helm template voting-app ./voting-app

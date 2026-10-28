@@ -1,65 +1,54 @@
-# Example Voting App
+# DevOps Capstone 1 — Voting App
 
-A simple distributed application running across multiple Docker containers.
+A containerized voting application used to demonstrate Docker, Kubernetes, Terraform, Helm and GitHub Actions.
 
-## Getting started
+## Repository
+- GitHub fork: https://github.com/morecrownsamuel/example-voting-app
 
-Download [Docker Desktop](https://www.docker.com/products/docker-desktop) for Mac or Windows. [Docker Compose](https://docs.docker.com/compose) will be automatically installed. On Linux, make sure you have the latest version of [Compose](https://docs.docker.com/compose/install/).
+## Application architecture
+The `vote` service accepts votes and places them in Redis. The `worker` consumes queued votes and stores them in PostgreSQL. The `result` service displays the totals.
 
-This solution uses Python, Node.js, .NET, with Redis for messaging and Postgres for storage.
+## Run locally with Docker Compose
+From the repository root:
 
-Run in this directory to build and run the app:
+```bash
+docker compose up -d
 
-```shell
-docker compose up
+docker compose ps
 ```
 
-The `vote` app will be running at [http://localhost:8080](http://localhost:8080), and the `results` will be at [http://localhost:8081](http://localhost:8081).
+Use the ports published by the Compose configuration to open the vote and result applications. To stop the local stack:
 
-Alternately, if you want to run it on a [Docker Swarm](https://docs.docker.com/engine/swarm/), first make sure you have a swarm. If you don't, run:
-
-```shell
-docker swarm init
+```bash
+docker compose down
 ```
 
-Once you have your swarm, in this directory run:
+## Kubernetes / Helm / Terraform
+- Terraform configuration: `terraform/`
+- Voting App Helm chart: `voting-app/`
+- Terraform/Helm checks workflow: `.github/workflows/terraform-helm-checks.yml`
 
-```shell
-docker stack deploy --compose-file docker-stack.yml vote
+The Terraform configuration in this repository configures the Kubernetes provider from the local kubeconfig and manages a `terraform-lab` namespace. It does **not** provision an AWS EKS cluster. The current AWS EKS access issue is separate from the local Minikube environment.
+
+Typical validation commands (require the tools installed; Terraform validation may initialize providers):
+
+```bash
+terraform -chdir=terraform fmt -check -recursive
+terraform -chdir=terraform init -backend=false
+terraform -chdir=terraform validate
+helm lint ./voting-app
 ```
 
-## Run the app in Kubernetes
+## CI/CD
+The repository includes component image build workflows and a Terraform/Helm validation workflow. Check the **Actions** tab for the latest run results. A green validation job is not by itself proof that a full deployment or image push succeeded.
 
-The folder k8s-specifications contains the YAML specifications of the Voting App's services.
+## Evidence and current status
+Previously demonstrated during development: the Voting App and Results pages loaded locally through Kubernetes services; application pods were reported `1/1 Running`; and a Helm rollback completed successfully, with Helm history showing a rollback revision. The local Minikube API server later became unstable due to etcd/API health errors. These historical results do not guarantee the cluster is currently healthy.
 
-Run the following command to create the deployments and services. Note it will create these resources in your current namespace (`default` if you haven't changed it.)
+## Security notes
+- Do not commit kubeconfig files, cloud credentials, tokens, `.env` secrets or Terraform state containing sensitive values.
+- Use repository/organization secrets for CI credentials.
+- Review base image versions, non-root execution and `.dockerignore` files before claiming the safe-containerization criteria are complete.
 
-```shell
-kubectl create -f k8s-specifications/
-```
-
-The `vote` web app is then available on port 31000 on each host of the cluster, the `result` web app is available on port 31001.
-
-To remove them, run:
-
-```shell
-kubectl delete -f k8s-specifications/
-```
-
-## Architecture
-
-![Architecture diagram](architecture.excalidraw.png)
-
-* A front-end web app in [Python](/vote) which lets you vote between two options
-* A [Redis](https://hub.docker.com/_/redis/) which collects new votes
-* A [.NET](/worker/) worker which consumes votes and stores them in…
-* A [Postgres](https://hub.docker.com/_/postgres/) database backed by a Docker volume
-* A [Node.js](/result) web app which shows the results of the voting in real time
-
-## Notes
-
-The voting application only accepts one vote per client browser. It does not register additional votes if a vote has already been submitted from a client.
-
-This isn't an example of a properly architected perfectly designed distributed app... it's just a simple
-example of the various types of pieces and languages you might see (queues, persistent data, etc), and how to
-deal with them in Docker at a basic level.
+## Architecture diagram
+See [`docs/architecture.mmd`](docs/architecture.mmd) (copy the provided diagram there).

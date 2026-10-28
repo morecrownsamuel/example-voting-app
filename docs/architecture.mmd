@@ -1,0 +1,31 @@
+flowchart TD
+    Dev[Developer push / pull request] --> GH[GitHub repository]
+    GH --> CI[GitHub Actions]
+    CI --> TF[Terraform format / init / validate]
+    CI --> HL[Helm lint]
+    GH --> IMG[Component image build workflows]
+    IMG --> REG[Container image registry]
+    TF --> K8S[Kubernetes cluster]
+    HL --> CHART[Voting App Helm chart]
+    CHART --> K8S
+    REG --> K8S
+    subgraph Voting App
+      V[Vote UI] --> R[(Redis queue)]
+      R --> W[Worker]
+      W --> P[(PostgreSQL)]
+      P --> RES[Results UI]
+    end
+    K8S --> V
+    K8S --> W
+    K8S --> RES
+    subgraph Robot Shop / Observability
+      RS[Robot Shop services] --> PR[Prometheus]
+      PR --> GF[Grafana dashboard]
+      RS --> FB[Fluent Bit]
+      FB --> LK[(Loki logs)]
+      RS --> OT[OpenTelemetry Collector]
+      OT --> JA[Jaeger traces]
+      PR --> AL[Alert / SLO]
+      AL --> RB[Runbook]
+    end
+    K8S --> RS
