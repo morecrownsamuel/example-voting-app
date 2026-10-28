@@ -36,7 +36,7 @@ components:
 
   worker:
     enabled: true
-    image: dockersamples/examplevotingapp_worker
+    image: ghcr.io/morecrownsamuel/example-voting-app-worker
     tag: latest
 
   redis:
